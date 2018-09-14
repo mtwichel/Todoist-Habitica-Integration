@@ -30,7 +30,7 @@ def processTodoistWebhook(request):
 
 
         #check it it's labels are in the system
-        for label in labels:
+        #for label in labels:
             #TODO Cycle through labels and make sure they're in the database
 
         #TODO check if projectId is in the system
