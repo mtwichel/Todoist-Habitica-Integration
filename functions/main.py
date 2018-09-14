@@ -18,6 +18,7 @@ def authorizeTodoistApp(request):
 
 def processTodoistWebhook(request):
     request_json = request.get_json()
+    print(request_json)
     
     if(request_json.get('event_name') == 'item.added'):
         #Item added
