@@ -18,11 +18,22 @@ def authorizeTodoistApp(request):
 
 def processTodoistWebhook(request):
     request_json = request.get_json()
-    print(request_json)
+    print(type(request_json))
     
     if(request_json.get('event_name') == 'item.added'):
         #Item added
         eventData = request_json.get('event_data')
         print(eventData)
+        
+        projectId = eventData.get('project_id')
+        labels = eventData.get('labels')
 
+
+        #check it it's labels are in the system
+        for label in labels:
+            #TODO Cycle through labels and make sure they're in the database
+
+        #TODO check if projectId is in the system
+        
     return "hi"
+    
