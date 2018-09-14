@@ -14,3 +14,14 @@ def authorizeTodoistApp(request):
     else:
         #abandon ship
         return abort(403)
+
+
+def processTodoistWebhook(request):
+    request_json = request.get_json()
+    
+    if(request_json.get('event_name') == 'item.added'):
+        #Item added
+        eventData = request_json.get('event_data')
+        print(eventData)
+
+    return "hi"
