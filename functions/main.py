@@ -175,5 +175,6 @@ def processTodoistWebhook(request):
             data=json.dumps(habiticaRequestData), 
             headers=habiticaAuth)
         if not habiticaRequest.json().get('success'):
+            print(str(tags))
             logging.warn(habiticaRequest.json().get('message'))
             logging.warn(habiticaRequest.json().get('errors')[0].get('message'))
