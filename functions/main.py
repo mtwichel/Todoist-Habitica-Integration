@@ -112,45 +112,7 @@ def convertPriority(todoistPriority):
 def processTodoistWebhook(request):
     db = firestore.client()
 
-    #request_json = request.get_json()
-    request_json = {
-        "event_name": "item:added",
-        "initiator": {
-            "is_premium": True,
-            "image_id": "e33bf67084c8b1d35b12c8b2e93ae765",
-            "id": 3185441,
-            "full_name": "Marcus Twichel",
-            "email": "marc.twichy@gmail.com"
-        },
-        "version": "7",
-        "user_id": 3185441,
-        "event_data": {
-            "assigned_by_uid": None,
-            "is_archived": 0,
-            "labels": [],
-            "sync_id": None,
-            "all_day": False,
-            "in_history": 0,
-            "indent": 1,
-            "checked": 0,
-            "date_completed": None,
-            "date_lang": None,
-            "id": 2813975481,
-            "content": "test2",
-            "is_deleted": 0,
-            "date_added": "Fri 14 Sep 2018 06:17:48 +0000",
-            "user_id": 3185441,
-            "url": "https://todoist.com/showTask?id=2813975481",
-            "due_date_utc": None,
-            "priority": 1,
-            "parent_id": None,
-            "item_order": 2,
-            "responsible_uid": None,
-            "project_id": 2194594717,
-            "collapsed": 0,
-            "date_string": None
-        }
-    }
+    request_json = request.get_json()
     
     if request_json.get('event_name') == 'item:added':
 
