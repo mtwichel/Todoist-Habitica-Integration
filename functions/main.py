@@ -152,6 +152,7 @@ def processTodoistWebhook(request):
         # get project from db, and create if needed
         projects = db.collection('users/' + str(userId) + '/projects').where('projectId', '==', str(projectId)).get()
         for project in projects:
+            print(project.to_dict())
             if project==None:
                 # need to add
                 print('Adding project' + projectId)
