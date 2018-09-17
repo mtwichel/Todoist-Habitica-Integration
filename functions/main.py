@@ -143,6 +143,7 @@ def processTodoistWebhook(request):
             for doc in docs:
                 if doc == None:
                     # Need to add it
+                    print('Adding project' + labelId)
                     tags.append(addLabelToDbFromTodoist(userId, labelId))
                 else:
                     # Already in the system
@@ -153,6 +154,7 @@ def processTodoistWebhook(request):
         for project in projects:
             if project==None:
                 # need to add
+                print('Adding project' + projectId)
                 tags.append(addProjectToDbFromTodoist(userId, projectId))
             else:
                 #already in db
