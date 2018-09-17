@@ -117,6 +117,8 @@ def processTodoistWebhook(request):
     if request_json.get('event_name') == 'item:added':
 
         #Item added
+
+        # get all the data needed from json object
         initiator = request_json.get('initiator')
         eventData = request_json.get('event_data')
         
@@ -127,12 +129,13 @@ def processTodoistWebhook(request):
         dueDateUtc = eventData.get('due_date_utc') 
         priority = eventData.get('priority') 
 
+        #convert date from utc to local if needed
         if(dueDateUtc != None):
             localDate = convertToLocalTime(dueDateUtc)
         else:
             localDate = None
 
-        # get labels
+        # get labels from db, and create if needed
         tags = []
         for labelId in labels:
             docs = db.collection('users/' + str(userId) + '/labels').where('todoistId', '==', str(labelId)).get()
@@ -144,15 +147,17 @@ def processTodoistWebhook(request):
                     # Already in the system
                     tags.append(doc.to_dict().get('habiticaGuid'))
 
-        # get project
+        # get project from db, and create if needed
         projects = db.collection('users/' + str(userId) + '/projects').where('projectId', '==', str(projectId)).get()
         for project in projects:
             if project==None:
-                # add project to DB
+                # need to add
                 tags.append(addProjectToDbFromTodoist(userId, projectId))
             else:
+                #already in db
                 tags.append(project.to_dict().get('habiticaGuid'))
         
+        #build request to add to habitica
         habiticaRequestData = {
             'text' : text,
             'type' : 'todo',
@@ -166,4 +171,5 @@ def processTodoistWebhook(request):
         habiticaRequest = requests.post('https://habitica.com/api/v3/tasks/user', 
             data=json.dumps(habiticaRequestData), 
             headers=habiticaAuth)
-        
+        if not habiticaRequest.json().get('success'):
+            print(habiticaRequest.json().get('message'))
