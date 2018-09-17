@@ -1,10 +1,18 @@
 import requests
 import flask
-from google.cloud import firestore
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
+# Use the application default credentials
+cred = credentials.ApplicationDefault()
+firebase_admin.initialize_app(cred, {
+  'projectId': 	'todoisthabiticasync-216323',
+})
 
 
 def authorizeTodoistApp(request):
-    db = firestore.Client()
+    db = firestore.client()
 
     code = request.args.get('code')
     state = request.args.get('state')
@@ -25,7 +33,7 @@ def authorizeTodoistApp(request):
 
 
 def processTodoistWebhook(request):
-    db = firestore.Client()
+    db = firestore.client()
 
     #request_json = request.get_json()
     request_json = {
