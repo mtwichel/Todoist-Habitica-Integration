@@ -98,4 +98,3 @@ def processTodoistWebhook(request):
         
     
 
-authorizeTodoistApp(None)
