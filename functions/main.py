@@ -6,6 +6,7 @@ from firebase_admin import firestore
 from datetime import datetime
 from dateutil import tz
 import json
+import logging
 
 # Use the application default credentials
 cred = credentials.ApplicationDefault()
