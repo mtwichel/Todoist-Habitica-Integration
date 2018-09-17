@@ -24,8 +24,8 @@ def authorizeTodoistApp(request):
         authRequest = requests.post('https://todoist.com/oauth/access_token', data=data)
         userToken = authRequest.json().get('access_token')
         idRequest = requests.post('https://todoist.com/api/v7/sync', data={'token':userToken, 'sync_token': '*', 'resource_types': ['user']})
-        id = idRequest.json().get('id')
-        db.document('users/' + str(id)).set({'todoistAuthToken' : userToken})
+        userId = idRequest.json().get('id')
+        db.document('users/' + str(userId)).set({'todoistAuthToken' : userToken})
         return 'All Good'
     else:
         #abandon ship
@@ -98,4 +98,4 @@ def processTodoistWebhook(request):
         
     
 
-processTodoistWebhook(None)
+authorizeTodoistApp(None)
