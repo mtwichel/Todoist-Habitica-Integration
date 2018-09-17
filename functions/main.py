@@ -7,6 +7,7 @@ from datetime import datetime
 from dateutil import tz
 import json
 import logging
+import itertools
 
 # Use the application default credentials
 cred = credentials.ApplicationDefault()
@@ -139,28 +140,26 @@ def processTodoistWebhook(request):
         # get labels from db, and create if needed
         tags = []
         for labelId in labels:
+            handeled = False
             docs = db.collection('users/' + str(userId) + '/labels').where('todoistId', '==', str(labelId)).get()
             for doc in docs:
-                if doc == None:
-                    # Need to add it
-                    print('Adding project' + labelId)
-                    tags.append(addLabelToDbFromTodoist(userId, labelId))
-                else:
-                    # Already in the system
-                    tags.append(doc.to_dict().get('habiticaGuid'))
+                tags.append(doc.to_dict().get('habiticaGuid'))
+                handeled = True
+            if not handeled:
+                print('Adding label' + labelId + ' to the db')
+                tags.append(addLabelToDbFromTodoist(userId, labelId))
 
         # get project from db, and create if needed
         projects = db.collection('users/' + str(userId) + '/projects').where('projectId', '==', str(projectId)).get()
-        for project in projects:
-            print(project.to_dict())
-            if project==None:
-                # need to add
-                print('Adding project' + projectId)
-                tags.append(addProjectToDbFromTodoist(userId, projectId))
-            else:
-                #already in db
+        if sum((1 for i in projects) == 0):
+            #add to db
+            print('Adding project' + projectId + ' to the db')
+            tags.append(addProjectToDbFromTodoist(userId, projectId))
+        else:
+            #already in DB
+            for project in projects:
                 tags.append(project.to_dict().get('habiticaGuid'))
-        
+
         #build request to add to habitica
         habiticaRequestData = {
             'text' : text,
