@@ -83,9 +83,10 @@ def processTodoistWebhook(request):
             for doc in docs:
                 if(doc != None):
                     # Need to add it
-                    
+                    print('hi')
                 else:
                     # Already in the system
+                    print('hi')
         
     
 
