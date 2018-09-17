@@ -22,9 +22,9 @@ def authorizeTodoistApp(request):
     
     if state == 'yodarox314':
         authRequest = requests.post('https://todoist.com/oauth/access_token', data=data)
-        userToken = authRequest.get_json().get('access_token')
+        userToken = authRequest.json().get('access_token')
         idRequest = requests.post('https://todoist.com/api/v7/sync', data={'token':userToken, 'sync_token': '*', 'resource_types': ['user']})
-        id = idRequest.get_json().get('id')
+        id = idRequest.json().get('id')
         db.document('users/' + str(id)).set({'todoistAuthToken' : userToken})
         return 'All Good'
     else:
