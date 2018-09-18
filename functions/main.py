@@ -151,7 +151,7 @@ def processTodoistWebhook(request):
 
         # get project from db, and create if needed
         projects = db.collection('users/' + str(userId) + '/projects').where('projectId', '==', str(projectId)).get()
-        if sum((1 for i in projects) == 0):
+        if (sum(1 for i in projects)) == 0:
             #add to db
             print('Adding project' + projectId + ' to the db')
             tags.append(addProjectToDbFromTodoist(userId, projectId))
