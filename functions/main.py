@@ -142,7 +142,7 @@ def processTodoistWebhook(request):
         tags = []
         for labelId in labels:
             handeled = False
-            docs = db.collection('users/' + str(userId) + '/labels').where('todoistId', '==', str(labelId)).get()
+            docs = db.collection('users/' + str(userId) + '/labels').where('todoistId', '==', labelId).get()
             for doc in docs:
                 tags.append(doc.to_dict().get('habiticaGuid'))
                 handeled = True
@@ -151,7 +151,7 @@ def processTodoistWebhook(request):
                 tags.append(addLabelToDbFromTodoist(userId, labelId))
 
         # get project from db, and create if needed
-        projects = db.collection('users/' + str(userId) + '/projects').where('projectId', '==', str(projectId)).get()
+        projects = db.collection('users/' + str(userId) + '/projects').where('todoistId', '==', projectId).get()
         if (sum(1 for i in projects)) == 0:
             #add to db
             print('Adding project' + str(projectId) + ' to the db')
