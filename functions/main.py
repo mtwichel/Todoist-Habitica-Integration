@@ -89,7 +89,8 @@ def addProjectToDbFromTodoist(userId, todoistId):
     tagRequest = requests.post('https://habitica.com/api/v3/tags', headers=headers, data='{"name":"#'+ text +'"}')
     habiticaGuid = tagRequest.json().get('data').get('id')
 
-    db.collection('users').document(str(userId)).collection('projects').document().set({
+    doc = db.collection('users').document(str(userId)).collection('projects').document()
+    doc.set({
         'todoistId' : todoistId,
         'text' : text,
         'habiticaGuid' : habiticaGuid
