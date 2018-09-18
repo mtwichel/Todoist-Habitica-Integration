@@ -166,7 +166,7 @@ def processTodoistWebhook(request):
         habiticaRequestData = {
             'text' : text,
             'type' : 'todo',
-            'tags' : str(tags),
+            'tags' : tags,
             'priority' : convertPriority(priority)}
         if localDate != None:
             habiticaRequestData.update({'date': str(localDate)})
