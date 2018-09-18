@@ -66,7 +66,7 @@ def addLabelToDbFromTodoist(userId, todoistId):
 
     # add tag to habitica
     headers = getHabiticaAuth(userId)
-    tagRequest = requests.post('https://habitica.com/api/v3/tags', headers=headers, data='{"name":"'+ text +'"}')
+    tagRequest = requests.post('https://habitica.com/api/v3/tags', headers=headers, data='{"name":"@'+ text +'"}')
     habiticaGuid = tagRequest.json().get('data').get('id')
 
     db.collection('users').document(str(userId)).collection('labels').document().set({
