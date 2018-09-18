@@ -152,14 +152,15 @@ def processTodoistWebhook(request):
 
         # get project from db, and create if needed
         projects = db.collection('users/' + str(userId) + '/projects').where('todoistId', '==', projectId).get()
-        if (sum(1 for i in projects)) == 0:
-            #add to db
+        handeled = False
+        for project in projects:
+            #already in DB
+            tags.append(project.to_dict().get('habiticaGuid'))
+            handeled = True
+        if not handeled:
             print('Adding project' + str(projectId) + ' to the db')
             tags.append(addProjectToDbFromTodoist(userId, projectId))
-        else:
-            #already in DB
-            for project in projects:
-                tags.append(project.to_dict().get('habiticaGuid'))
+           
 
         #build request to add to habitica
         habiticaRequestData = {
