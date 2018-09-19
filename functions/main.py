@@ -194,6 +194,26 @@ def processItemAdded(request_json):
         'habiticaGuid' : habiticaTaskId
         })
 
+def processItemCompleted(request_json):
+    db = firestore.client()
+    taskId=request_json.get('event_data').get('id')
+    userId=request_json.get('initiator').get('id')
+
+    count = 0
+    tasks = db.collection('users').document(str(userId)).collection('tasks').where('todoistId', '==', taskId)
+    for task in tasks:
+        count += 1
+        if count == 1:
+            habiticaGuid = task.to_dict().get('habiticaGuid')
+        elif count == 0:
+            logging.warn('task '+taskId+' not found')
+        else:
+            logging.warn('to many tasks with id '+ taskId+' found')
+
+    headers = getHabiticaAuth(userId)
+
+    requests.post('https://habitica.com/api/v3/tasks/'+habiticaGuid +'/score/up')
+
 
 # request_json={
 #   "event_name": "item:added",
