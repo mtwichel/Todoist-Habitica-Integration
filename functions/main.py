@@ -10,13 +10,13 @@ import logging
 import itertools
 
 # Use the application default credentials
-cred = credentials.ApplicationDefault()
-firebase_admin.initialize_app(cred, {
-  'projectId': 	'todoisthabiticasync-216323',
-})
+# cred = credentials.ApplicationDefault()
+# firebase_admin.initialize_app(cred, {
+#   'projectId': 	'todoisthabiticasync-216323',
+# })
 
-# cred = credentials.Certificate('/Users/mtwichel/Google Drive/Documents/Development/Projects/other/TodoistHabiticaIntegration/functions/TodoistHabiticaSync-075884dae0fc.json')
-# default_app = firebase_admin.initialize_app(cred)
+cred = credentials.Certificate('/Users/mtwichel/Google Drive/Documents/Development/Projects/other/TodoistHabiticaIntegration/functions/TodoistHabiticaSync-075884dae0fc.json')
+default_app = firebase_admin.initialize_app(cred)
 
 
 def authorizeTodoistApp(request):
@@ -113,70 +113,124 @@ def convertPriority(todoistPriority):
 
 
 def processTodoistWebhook(request):
-    db = firestore.client()
 
     request_json = request.get_json()
     
     if request_json.get('event_name') == 'item:added':
-
         #Item added
+        processItemAdded(request_json)
+    elif request_json.get('event_name') == 'item:completed':
+        processItemCompleted(request_json)
 
-        # get all the data needed from json object
-        initiator = request_json.get('initiator')
-        eventData = request_json.get('event_data')
-        
-        userId = initiator.get('id')
-        text = eventData.get('content')
-        projectId = eventData.get('project_id')
-        labels = eventData.get('labels')
-        dueDateUtc = eventData.get('due_date_utc') 
-        priority = eventData.get('priority') 
+def processItemAdded(request_json):
+    db = firestore.client()
 
-        #convert date from utc to local if needed
-        if(dueDateUtc != None):
-            localDate = convertToLocalTime(dueDateUtc)
-        else:
-            localDate = None
+    # get all the data needed from json object
+    initiator = request_json.get('initiator')
+    eventData = request_json.get('event_data')
 
-        # get labels from db, and create if needed
-        tags = []
-        for labelId in labels:
-            handeled = False
-            docs = db.collection('users/' + str(userId) + '/labels').where('todoistId', '==', labelId).get()
-            for doc in docs:
-                tags.append(doc.to_dict().get('habiticaGuid'))
-                handeled = True
-            if not handeled:
-                print('Adding label' + str(labelId) + ' to the db')
-                tags.append(addLabelToDbFromTodoist(userId, labelId))
+    userId = initiator.get('id')
+    taskId = eventData.get('id')
+    text = eventData.get('content')
+    projectId = eventData.get('project_id')
+    labels = eventData.get('labels')
+    dueDateUtc = eventData.get('due_date_utc') 
+    priority = eventData.get('priority') 
 
-        # get project from db, and create if needed
-        projects = db.collection('users/' + str(userId) + '/projects').where('todoistId', '==', projectId).get()
+    #convert date from utc to local if needed
+    if(dueDateUtc != None):
+        localDate = convertToLocalTime(dueDateUtc)
+    else:
+        localDate = None
+
+    # get labels from db, and create if needed
+    tags = []
+    for labelId in labels:
         handeled = False
-        for project in projects:
-            #already in DB
-            tags.append(project.to_dict().get('habiticaGuid'))
+        docs = db.collection('users/' + str(userId) + '/labels').where('todoistId', '==', labelId).get()
+        for doc in docs:
+            tags.append(doc.to_dict().get('habiticaGuid'))
             handeled = True
         if not handeled:
-            print('Adding project' + str(projectId) + ' to the db')
-            tags.append(addProjectToDbFromTodoist(userId, projectId))
-           
+            print('Adding label' + str(labelId) + ' to the db')
+            tags.append(addLabelToDbFromTodoist(userId, labelId))
 
-        #build request to add to habitica
-        habiticaRequestData = {
-            'text' : text,
-            'type' : 'todo',
-            'tags' : tags,
-            'priority' : convertPriority(priority)}
-        if localDate != None:
-            habiticaRequestData.update({'date': str(localDate)})
+    # get project from db, and create if needed
+    projects = db.collection('users/' + str(userId) + '/projects').where('todoistId', '==', projectId).get()
+    handeled = False
+    for project in projects:
+        #already in DB
+        tags.append(project.to_dict().get('habiticaGuid'))
+        handeled = True
+    if not handeled:
+        print('Adding project' + str(projectId) + ' to the db')
+        tags.append(addProjectToDbFromTodoist(userId, projectId))
 
-        habiticaAuth = getHabiticaAuth(userId)
 
-        habiticaRequest = requests.post('https://habitica.com/api/v3/tasks/user', 
-            data=json.dumps(habiticaRequestData), 
-            headers=habiticaAuth)
-        if not habiticaRequest.json().get('success'):
-            print(str(tags))
-            logging.warn(habiticaRequest.json().get('message'))
-            logging.warn(habiticaRequest.json().get('errors')[0].get('message'))
+    #build request to add to habitica
+    habiticaRequestData = {
+        'text' : text,
+        'type' : 'todo',
+        'tags' : tags,
+        'priority' : convertPriority(priority)}
+    if localDate != None:
+        habiticaRequestData.update({'date': str(localDate)})
+
+    habiticaAuth = getHabiticaAuth(userId)
+
+    habiticaRequest = requests.post('https://habitica.com/api/v3/tasks/user', 
+        data=json.dumps(habiticaRequestData), 
+        headers=habiticaAuth)
+
+    if not habiticaRequest.json().get('success'):
+        print(str(tags))
+        logging.warn(habiticaRequest.json().get('message'))
+        logging.warn(habiticaRequest.json().get('errors')[0].get('message'))
+    else:
+        habiticaTaskId = habiticaRequest.json().get('data').get('id')
+        db.collection('users').document(str(userId)).collection('tasks').document().set({
+        'todoistId' : taskId,
+        'text' : text,
+        'habiticaGuid' : habiticaTaskId
+        })
+
+
+# request_json={
+#   "event_name": "item:added",
+#   "initiator": {
+#     "is_premium": True,
+#     "image_id": "e33bf67084c8b1d35b12c8b2e93ae765",
+#     "id": 3185441,
+#     "full_name": "Marcus Twichel",
+#     "email": "marc.twichy@gmail.com"
+#   },
+#   "version": "7",
+#   "user_id": 3185441,
+#   "event_data": {
+#     "assigned_by_uid": None,
+#     "is_archived": 0,
+#     "labels": [],
+#     "sync_id": None,
+#     "all_day": False,
+#     "in_history": 0,
+#     "indent": 1,
+#     "checked": 0,
+#     "date_completed": None,
+#     "date_lang": None,
+#     "id": 2818981510,
+#     "content": "test aa",
+#     "is_deleted": 0,
+#     "date_added": "Tue 18 Sep 2018 00:00:35 +0000",
+#     "user_id": 3185441,
+#     "url": "https://todoist.com/showTask?id=2818981510",
+#     "due_date_utc": None,
+#     "priority": 1,
+#     "parent_id": None,
+#     "item_order": 1,
+#     "responsible_uid": None,
+#     "project_id": 2194594717,
+#     "collapsed": 0,
+#     "date_string": None
+#   }
+# }
+# processItemAdded(request_json)   
