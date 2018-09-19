@@ -9,14 +9,13 @@ import json
 import logging
 import itertools
 
-# Use the application default credentials
-# cred = credentials.ApplicationDefault()
-# firebase_admin.initialize_app(cred, {
-#   'projectId': 	'todoisthabiticasync-216323',
-# })
+cred = credentials.ApplicationDefault()
+firebase_admin.initialize_app(cred, {
+  'projectId': 	'todoisthabiticasync-216323',
+})
 
-cred = credentials.Certificate('/Users/mtwichel/Google Drive/Documents/Development/Projects/other/TodoistHabiticaIntegration/functions/TodoistHabiticaSync-075884dae0fc.json')
-default_app = firebase_admin.initialize_app(cred)
+# cred = credentials.Certificate('/Users/mtwichel/Google Drive/Documents/Development/Projects/other/TodoistHabiticaIntegration/functions/TodoistHabiticaSync-075884dae0fc.json')
+# default_app = firebase_admin.initialize_app(cred)
 
 
 def authorizeTodoistApp(request):
