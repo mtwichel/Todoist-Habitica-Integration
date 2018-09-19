@@ -199,7 +199,7 @@ def processItemCompleted(request_json):
     userId=request_json.get('initiator').get('id')
 
     count = 0
-    tasks = db.collection('users').document(str(userId)).collection('tasks').where('todoistId', '==', taskId)
+    tasks = db.collection('users').document(str(userId)).collection('tasks').where('todoistId', '==', taskId).get()
     for task in tasks:
         count += 1
         if count == 1:
