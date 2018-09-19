@@ -120,6 +120,35 @@ def processTodoistWebhook(request):
         processItemAdded(request_json)
     elif request_json.get('event_name') == 'item:completed':
         processItemCompleted(request_json)
+    elif request_json.get('event_name') == 'item:updated':
+        processItemUpdated(request_json)
+
+def checkLabelsInDb(labels, userId):
+    db=firestore.client()
+
+    tags = []
+    for labelId in labels:
+        handeled = False
+        docs = db.collection('users/' + str(userId) + '/labels').where('todoistId', '==', labelId).get()
+        for doc in docs:
+            tags.append(doc.to_dict().get('habiticaGuid'))
+            handeled = True
+        if not handeled:
+            print('Adding label' + str(labelId) + ' to the db')
+            tags.append(addLabelToDbFromTodoist(userId, labelId))
+    return tags
+
+def checkProjectInDb(userId, projectId):
+    db=firestore.client()
+    projects = db.collection('users/' + str(userId) + '/projects').where('todoistId', '==', projectId).get()
+    handeled = False
+    for project in projects:
+        #already in DB
+        return project.to_dict().get('habiticaGuid')
+        handeled = True
+    if not handeled:
+        print('Adding project' + str(projectId) + ' to the db')
+        return addProjectToDbFromTodoist(userId, projectId)
 
 def processItemAdded(request_json):
     db = firestore.client()
@@ -143,27 +172,10 @@ def processItemAdded(request_json):
         localDate = None
 
     # get labels from db, and create if needed
-    tags = []
-    for labelId in labels:
-        handeled = False
-        docs = db.collection('users/' + str(userId) + '/labels').where('todoistId', '==', labelId).get()
-        for doc in docs:
-            tags.append(doc.to_dict().get('habiticaGuid'))
-            handeled = True
-        if not handeled:
-            print('Adding label' + str(labelId) + ' to the db')
-            tags.append(addLabelToDbFromTodoist(userId, labelId))
+    tags = checkLabelsInDb(labels, userId)
 
     # get project from db, and create if needed
-    projects = db.collection('users/' + str(userId) + '/projects').where('todoistId', '==', projectId).get()
-    handeled = False
-    for project in projects:
-        #already in DB
-        tags.append(project.to_dict().get('habiticaGuid'))
-        handeled = True
-    if not handeled:
-        print('Adding project' + str(projectId) + ' to the db')
-        tags.append(addProjectToDbFromTodoist(userId, projectId))
+    tags.append(checkProjectInDb(userId, projectId))
 
 
     #build request to add to habitica
@@ -212,3 +224,61 @@ def processItemCompleted(request_json):
     headers = getHabiticaAuth(userId)
 
     requests.post('https://habitica.com/api/v3/tasks/'+habiticaGuid +'/score/up', headers=headers)
+
+def processItemUpdated(request_json):
+    db = firestore.client()
+
+    # get all the data needed from json object
+    initiator = request_json.get('initiator')
+    eventData = request_json.get('event_data')
+
+    userId = initiator.get('id')
+    taskId = eventData.get('id')
+    text = eventData.get('content')
+    projectId = eventData.get('project_id')
+    labels = eventData.get('labels')
+    dueDateUtc = eventData.get('due_date_utc') 
+    priority = eventData.get('priority') 
+
+    #convert date from utc to local if needed
+    if(dueDateUtc != None):
+        localDate = convertToLocalTime(dueDateUtc)
+    else:
+        localDate = None
+
+    # get labels from db, and create if needed
+    tags = checkLabelsInDb(labels, userId)
+
+    # get project from db, and create if needed
+    tags.append(checkProjectInDb(userId, projectId))
+
+
+    #build request to add to habitica
+    habiticaRequestData = {
+        'text' : text,
+        'type' : 'todo',
+        'tags' : tags,
+        'priority' : convertPriority(priority)}
+    if localDate != None:
+        habiticaRequestData.update({'date': str(localDate)})
+
+    headers = getHabiticaAuth(userId)
+    count = 0
+    tasks = db.collection('users').document(str(userId)).collection('tasks').where('todoistId', '==', taskId).get()
+    for task in tasks:
+        count += 1
+        if count == 1:
+            habiticaGuid = task.to_dict().get('habiticaGuid')
+        elif count == 0:
+            logging.warn('task '+taskId+' not found')
+        else:
+            logging.warn('to many tasks with id '+ taskId+' found')
+
+    habiticaRequest = requests.post('https://habitica.com/api/v3/tasks/' + habiticaGuid, 
+        data=json.dumps(habiticaRequestData), 
+        headers=headers)
+
+    if not habiticaRequest.json().get('success'):
+        print(str(tags))
+        logging.warn(habiticaRequest.json().get('message'))
+        logging.warn(habiticaRequest.json().get('errors')[0].get('message'))
