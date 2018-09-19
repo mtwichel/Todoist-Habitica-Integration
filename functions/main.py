@@ -211,45 +211,4 @@ def processItemCompleted(request_json):
 
     headers = getHabiticaAuth(userId)
 
-    requests.post('https://habitica.com/api/v3/tasks/'+habiticaGuid +'/score/up')
-
-
-# request_json={
-#   "event_name": "item:added",
-#   "initiator": {
-#     "is_premium": True,
-#     "image_id": "e33bf67084c8b1d35b12c8b2e93ae765",
-#     "id": 3185441,
-#     "full_name": "Marcus Twichel",
-#     "email": "marc.twichy@gmail.com"
-#   },
-#   "version": "7",
-#   "user_id": 3185441,
-#   "event_data": {
-#     "assigned_by_uid": None,
-#     "is_archived": 0,
-#     "labels": [],
-#     "sync_id": None,
-#     "all_day": False,
-#     "in_history": 0,
-#     "indent": 1,
-#     "checked": 0,
-#     "date_completed": None,
-#     "date_lang": None,
-#     "id": 2818981510,
-#     "content": "test aa",
-#     "is_deleted": 0,
-#     "date_added": "Tue 18 Sep 2018 00:00:35 +0000",
-#     "user_id": 3185441,
-#     "url": "https://todoist.com/showTask?id=2818981510",
-#     "due_date_utc": None,
-#     "priority": 1,
-#     "parent_id": None,
-#     "item_order": 1,
-#     "responsible_uid": None,
-#     "project_id": 2194594717,
-#     "collapsed": 0,
-#     "date_string": None
-#   }
-# }
-# processItemAdded(request_json)   
+    requests.post('https://habitica.com/api/v3/tasks/'+habiticaGuid +'/score/up', headers=headers)
