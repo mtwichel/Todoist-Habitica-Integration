@@ -34,7 +34,41 @@ def authorizeTodoistApp(request):
         print(idRequest.json())
         userId = idRequest.json().get('user').get('id')
         db.document('users/' + str(userId)).set({'todoistAuthToken' : userToken})
-        return 'All Good'
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Habitica Integration</title>
+        </head>
+        <body>
+            <style>
+            * {
+                margin: 10px;
+            }
+            </style>
+            <h2>Your Todoist API ID:</h2><p id='todoistApi'>"""+str(userId)+"""</p>
+            <label for='#apiGuid'>Personal UUID: </label>
+            <input id='apiGuid'>
+            <br>
+            <label for='#apiGuid'>Personal API Key: </label>
+            <input id='apiKey'>
+            <br>
+            <button type='submit' id='submit'>Submit</button>
+            <br>
+            <a href='http://habitica.wikia.com/wiki/API_Options'>Find More Information Here!</a>
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+            <script>
+            $('#submit').click(function(){
+                var uuid = $('#apiGuid').val()
+                var key = $('#apiKey').val()
+                var todoistApi = $('#todoistApi').text()
+                window.location.href = ('https://us-central1-todoisthabiticasync-216323.cloudfunctions.net/addHabiticaApiCreds?' + 'apiGuid=' + uuid +'&apiKey='+key + '&todoistId='+ todoistApi);
+            });
+            
+            </script>
+        </body>
+        </html>
+        """
     else:
         #abandon ship
         return abort(403)
