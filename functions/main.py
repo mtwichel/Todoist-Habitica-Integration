@@ -116,12 +116,13 @@ def processTodoistWebhook(request):
     request_json = request.get_json()
     
     if request_json.get('event_name') == 'item:added':
-        #Item added
         processItemAdded(request_json)
     elif request_json.get('event_name') == 'item:completed':
         processItemCompleted(request_json)
     elif request_json.get('event_name') == 'item:updated':
         processItemUpdated(request_json)
+    elif request_json.get('event_name') == 'item:deleted':
+        processItemDeleted(request_json)
 
 def checkLabelsInDb(labels, userId):
     db=firestore.client()
@@ -282,3 +283,23 @@ def processItemUpdated(request_json):
         print(str(tags))
         logging.warn(habiticaRequest.json().get('message'))
         logging.warn(habiticaRequest.json().get('errors')[0].get('message'))
+
+def processItemDeleted(request_json):
+    db = firestore.client()
+    taskId=request_json.get('event_data').get('id')
+    userId=request_json.get('initiator').get('id')
+
+    count = 0
+    tasks = db.collection('users').document(str(userId)).collection('tasks').where('todoistId', '==', taskId).get()
+    for task in tasks:
+        count += 1
+        if count == 1:
+            habiticaGuid = task.to_dict().get('habiticaGuid')
+        elif count == 0:
+            logging.warn('task '+taskId+' not found')
+        else:
+            logging.warn('to many tasks with id '+ taskId+' found')
+
+    headers = getHabiticaAuth(userId)
+
+    requests.delete('https://habitica.com/api/v3/tasks/'+habiticaGuid, headers=headers)
