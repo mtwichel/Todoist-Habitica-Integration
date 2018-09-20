@@ -274,7 +274,7 @@ def processItemUpdated(request_json):
         else:
             logging.warn('to many tasks with id '+ taskId+' found')
 
-    habiticaRequest = requests.post('https://habitica.com/api/v3/tasks/' + habiticaGuid, 
+    habiticaRequest = requests.put('https://habitica.com/api/v3/tasks/' + habiticaGuid, 
         data=json.dumps(habiticaRequestData), 
         headers=headers)
 
